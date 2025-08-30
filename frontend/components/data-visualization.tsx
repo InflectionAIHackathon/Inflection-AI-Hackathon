@@ -1,6 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   LineChart,
@@ -19,52 +20,116 @@ import {
 } from "recharts"
 import { TrendingUp, PieChartIcon, BarChart3, Calendar } from "lucide-react"
 
+// API configuration
+const API_BASE_URL = 'http://localhost:8000'
+
 interface DataVisualizationProps {
   county: string
   score: number
 }
 
 export function DataVisualization({ county, score }: DataVisualizationProps) {
-  // Mock historical resilience data
-  const historicalData = [
-    { month: "Jan", resilience: 72, rainfall: 45, temperature: 28 },
-    { month: "Feb", resilience: 68, rainfall: 38, temperature: 30 },
-    { month: "Mar", resilience: 65, rainfall: 42, temperature: 32 },
-    { month: "Apr", resilience: 78, rainfall: 85, temperature: 29 },
-    { month: "May", resilience: 82, rainfall: 120, temperature: 27 },
-    { month: "Jun", resilience: 75, rainfall: 95, temperature: 25 },
-    { month: "Jul", resilience: 70, rainfall: 65, temperature: 24 },
-    { month: "Aug", resilience: 73, rainfall: 55, temperature: 25 },
-    { month: "Sep", resilience: 76, rainfall: 70, temperature: 27 },
-    { month: "Oct", resilience: 79, rainfall: 85, temperature: 29 },
-    { month: "Nov", resilience: 81, rainfall: 110, temperature: 30 },
-    { month: "Dec", resilience: score, rainfall: 95, temperature: 28 },
-  ]
+  const [historicalData, setHistoricalData] = useState<any>(null);
+  const [factorData, setFactorData] = useState<any[]>([]);
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock factor breakdown data
-  const factorData = [
-    { name: "Soil Health", value: 25, color: "#4caf50" },
-    { name: "Water Availability", value: 30, color: "#2196f3" },
-    { name: "Weather Patterns", value: 20, color: "#ff9800" },
-    { name: "Crop Variety", value: 15, color: "#9c27b0" },
-    { name: "Management Practices", value: 10, color: "#607d8b" },
-  ]
+  // Fetch real data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
 
-  // Mock monthly weather patterns
-  const weatherData = [
-    { month: "Jan", rainfall: 45, temperature: 28, humidity: 65 },
-    { month: "Feb", rainfall: 38, temperature: 30, humidity: 62 },
-    { month: "Mar", rainfall: 42, temperature: 32, humidity: 68 },
-    { month: "Apr", rainfall: 85, temperature: 29, humidity: 75 },
-    { month: "May", rainfall: 120, temperature: 27, humidity: 80 },
-    { month: "Jun", rainfall: 95, temperature: 25, humidity: 78 },
-    { month: "Jul", rainfall: 65, temperature: 24, humidity: 72 },
-    { month: "Aug", rainfall: 55, temperature: 25, humidity: 70 },
-    { month: "Sep", rainfall: 70, temperature: 27, humidity: 73 },
-    { month: "Oct", rainfall: 85, temperature: 29, humidity: 76 },
-    { month: "Nov", rainfall: 110, temperature: 30, humidity: 78 },
-    { month: "Dec", rainfall: 95, temperature: 28, humidity: 74 },
-  ]
+        // Fetch historical data
+        const historicalResponse = await fetch(`${API_BASE_URL}/api/historical/${county}?year=2023`);
+        if (historicalResponse.ok) {
+          const historical = await historicalResponse.json();
+          setHistoricalData(historical);
+        }
+
+        // Fetch feature importance for factor breakdown
+        const featureResponse = await fetch(`${API_BASE_URL}/api/model/feature-importance`);
+        if (featureResponse.ok) {
+          const features = await featureResponse.json();
+          const factorBreakdown = Object.entries(features.feature_importance).map(([name, value]: [string, any]) => ({
+            name,
+            value: Math.round(value * 100),
+            color: getRandomColor(name)
+          }));
+          setFactorData(factorBreakdown);
+        }
+
+        // Fetch weather data
+        const weatherResponse = await fetch(`${API_BASE_URL}/api/weather/${county}/monthly?year=2023`);
+        if (weatherResponse.ok) {
+          const weather = await weatherResponse.json();
+          setWeatherData(weather);
+        }
+
+      } catch (err) {
+        setError('Failed to load data');
+        console.error('Error fetching data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (county) {
+      fetchData();
+    }
+  }, [county]);
+
+  // Generate random colors for factors
+  const getRandomColor = (name: string) => {
+    const colors = ['#4caf50', '#2196f3', '#ff9800', '#9c27b0', '#607d8b', '#e91e63', '#00bcd4', '#8bc34a'];
+    return colors[name.length % colors.length];
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl">
+            <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
+            <span className="text-balance">Data Analytics for {county}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl">
+            <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
+            <span className="text-balance">Data Analytics for {county}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center text-red-500">
+            <p>{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Retry
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -148,7 +213,7 @@ export function DataVisualization({ county, score }: DataVisualizationProps) {
               </div>
               <div className="h-64 sm:h-80 w-full overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={historicalData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <LineChart data={historicalData?.monthly_resilience || []} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="month"
@@ -251,7 +316,7 @@ export function DataVisualization({ county, score }: DataVisualizationProps) {
               </div>
               <div className="h-64 sm:h-80 w-full overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weatherData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <BarChart data={weatherData?.monthly_data || []} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="month"

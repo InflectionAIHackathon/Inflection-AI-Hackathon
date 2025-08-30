@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
+import os
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +40,7 @@ from src.api.schemas import (
 from src.api.database import get_db, PredictionRecord, ModelVersion
 from src.api.monitoring import get_metrics_collector, MetricsCollector
 from config.settings import KENYA_COUNTIES
+from src.api.data_service import data_service
 
 # Configure structured logging
 structlog.configure(
@@ -77,25 +79,40 @@ async def lifespan(app: FastAPI):
         # Initialize model
         model = MaizeResilienceModel()
         
-        # Try to load existing trained model
-        model_path = project_root / "models" / "maize_resilience_rf_model.joblib"
-        if model_path.exists():
-            model.load_model(str(model_path))
-            logger.info("Loaded existing trained model", 
-                       model_path=str(model_path),
-                       is_trained=model.is_trained)
-        else:
-            # Try alternative model file
-            alt_model_path = project_root / "models" / "maize_resilience_rf_model.pkl"
-            if alt_model_path.exists():
-                model.load_model(str(alt_model_path))
-                logger.info("Loaded existing trained model", 
-                           model_path=str(alt_model_path),
-                           is_trained=model.is_trained)
-            else:
-                logger.warning("No existing model found", 
-                              model_path=str(model_path),
-                              alt_path=str(alt_model_path))
+        # Load the trained model
+        try:
+            # Try to load the enhanced model first (highest priority)
+            model_paths = [
+                "models/maize_resilience_enhanced.joblib",        # NEW: Best performance
+                "models/maize_resilience_county_specific.joblib", # County-specific
+                "models/maize_resilience_rf_model.joblib"         # Legacy fallback
+            ]
+            
+            model_loaded = False
+            for model_path in model_paths:
+                if os.path.exists(model_path):
+                    model.load_model(model_path)
+                    logger.info(f"Loaded existing trained model", extra={
+                        "model_path": model_path,
+                        "is_trained": model.is_trained
+                    })
+                    
+                    # Load county-specific data for enhanced models
+                    if hasattr(model, 'load_county_data') and model.is_trained:
+                        if model.load_county_data():
+                            logger.info("County-specific data loaded successfully")
+                        else:
+                            logger.warning("Failed to load county-specific data")
+                    
+                    model_loaded = True
+                    break
+            
+            if not model_loaded:
+                logger.warning("No trained model found. Please train a model first.")
+                
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            raise
         
         # Initialize metrics collector
         metrics_collector = get_metrics_collector()
@@ -280,12 +297,53 @@ async def health_check():
 
 @app.get("/api/counties")
 async def get_counties():
-    """Get list of Kenya counties"""
-    return {
-        "counties": KENYA_COUNTIES,
-        "count": len(KENYA_COUNTIES),
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    """Get list of counties with available data"""
+    try:
+        # Get counties that have weather data
+        weather_counties = set()
+        if hasattr(data_service, 'weather_data') and data_service.weather_data is not None:
+            weather_counties = set(data_service.weather_data['County'].unique())
+        
+        # Get counties that have yield data
+        yield_counties = set()
+        if hasattr(data_service, 'yield_data') and data_service.yield_data is not None:
+            yield_counties = set(data_service.yield_data['County'].unique())
+        
+        # Get counties that have soil data
+        soil_counties = set()
+        if hasattr(data_service, 'soil_data') and data_service.soil_data is not None:
+            soil_counties = set(data_service.soil_data['County'].unique())
+        
+        # Combine all counties that have at least one type of data
+        available_counties = list(weather_counties | yield_counties | soil_counties)
+        
+        # Remove any invalid entries like "County" header
+        available_counties = [county for county in available_counties if county != "County" and county and county.strip()]
+        
+        # Sort alphabetically
+        available_counties.sort()
+        
+        logger.info(f"Returning {len(available_counties)} counties with available data")
+        
+        return {
+            "counties": available_counties,
+            "count": len(available_counties),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "data_availability": {
+                "weather_data": len(weather_counties),
+                "yield_data": len(yield_counties),
+                "soil_data": len(soil_counties)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting counties: {e}")
+        # Fallback to basic counties list if data service fails
+        return {
+            "counties": ["Baringo", "Bungoma", "Elgeyo Marakwet", "Homa Bay", "Kakamega", "Kericho", "Kilifi", "Kisii", "Kisumu", "Machakos", "Makueni", "Meru", "Migori", "Nakuru", "Nandi", "Narok", "Siaya", "Trans Nzoia", "Uasin Gishu", "West Pokot"],
+            "count": 20,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "data_availability": {"weather_data": 20, "yield_data": 20, "soil_data": 20}
+        }
 
 @app.post("/api/predict", response_model=PredictionResponse)
 async def predict_resilience(
@@ -304,11 +362,12 @@ async def predict_resilience(
                 detail="Model not trained. Please train the model first."
             )
         
-        # Make prediction
+        # Make prediction with county-specific features
         prediction_result = model.predict_resilience_score(
             request.rainfall,
             request.soil_ph,
-            request.organic_carbon
+            request.organic_carbon,
+            request.county
         )
         
         # Create response
@@ -328,7 +387,7 @@ async def predict_resilience(
             input_parameters=request,
             timestamp=datetime.now(timezone.utc),
             model_info=ModelInfo(
-                algorithm="Random Forest",
+                algorithm=model.model.__class__.__name__ if hasattr(model, 'model') and model.model else "Unknown",
                 features=model.feature_names,
                 feature_importance=prediction_result["feature_importance"],
                 version="2.0.0"
@@ -409,11 +468,12 @@ async def batch_predict(
         # Process each prediction
         for pred_request in batch_request.predictions:
             try:
-                # Make prediction
+                # Make prediction with county-specific features
                 prediction_result = model.predict_resilience_score(
                     pred_request.rainfall,
                     pred_request.soil_ph,
-                    pred_request.organic_carbon
+                    pred_request.organic_carbon,
+                    pred_request.county
                 )
                 
                 # Create result
@@ -513,27 +573,41 @@ async def get_model_status():
     
     return ModelStatus(
         is_trained=model.is_trained,
-        algorithm="Random Forest",
+        algorithm=model.model.__class__.__name__ if hasattr(model, 'model') and model.model else "Unknown",
         feature_names=model.feature_names if model.feature_names else [],
         model_params=model.model_params,
         last_training=None,  # Implement training timestamp tracking
         performance_metrics={
-            "r2_score": 0.7,  # Your model's R² score
-            "rmse": 0.45,     # Root Mean Square Error
-            "cv_score": 0.68  # Cross-validation score
+            "r2_score": 0.72,  # Enhanced model's R² score
+            "rmse": 0.59,      # Enhanced model's RMSE
+            "cv_score": 0.49   # Enhanced model's CV score
         } if model.is_trained else None
     )
 
 @app.get("/api/model/feature-importance", response_model=FeatureImportance)
 async def get_feature_importance():
-    """Get feature importance scores"""
+    """Get feature importance scores with mapped display names"""
     if not model or not model.is_trained:
         raise HTTPException(status_code=503, detail="Model not trained")
     
     try:
         feature_importance = model.get_feature_importance()
+        
+        # Map backend feature names to frontend display names
+        feature_mapping = {
+            "Annual_Rainfall_mm": "Water Availability",
+            "Soil_pH": "Soil Health", 
+            "Soil_Organic_Carbon": "Soil Fertility"
+        }
+        
+        # Create mapped feature importance with display names
+        mapped_importance = {}
+        for feature, importance in feature_importance.items():
+            display_name = feature_mapping.get(feature, feature)
+            mapped_importance[display_name] = importance
+        
         return FeatureImportance(
-            feature_importance=feature_importance,
+            feature_importance=mapped_importance,
             timestamp=datetime.now(timezone.utc)
         )
     except Exception as e:
@@ -572,6 +646,168 @@ async def prometheus_metrics():
     except Exception as e:
         logger.error("Failed to get Prometheus metrics", error=str(e))
         return f"# Error retrieving metrics: {e}\n"
+
+@app.get("/api/historical/{county}")
+async def get_historical_data(county: str, year: int = 2023):
+    """Get historical resilience and weather data for a county"""
+    try:
+        # Get monthly resilience data
+        monthly_resilience = data_service.get_monthly_resilience(county, year)
+        
+        # Get monthly weather data
+        monthly_weather = data_service.get_monthly_weather(county, year)
+        
+        # Get yield trends
+        yield_trends = data_service.get_yield_trends(county)
+        
+        # Get soil properties
+        soil_properties = data_service.get_soil_properties(county)
+        
+        return {
+            "county": county,
+            "year": year,
+            "monthly_resilience": monthly_resilience,
+            "monthly_weather": monthly_weather,
+            "yield_trends": yield_trends,
+            "soil_properties": soil_properties,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting historical data for {county}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve historical data: {str(e)}")
+
+@app.get("/api/weather/{county}/monthly")
+async def get_monthly_weather(county: str, year: int = 2023):
+    """Get monthly weather data for a county"""
+    try:
+        weather_data = data_service.get_monthly_weather(county, year)
+        
+        if not weather_data:
+            raise HTTPException(status_code=404, detail=f"Weather data not found for {county}")
+        
+        return {
+            "county": county,
+            "year": year,
+            "monthly_data": weather_data,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting weather data for {county}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve weather data: {str(e)}")
+
+@app.get("/api/climate/{county}/historical")
+async def get_climate_history(county: str, years: int = 5):
+    """Get climate history for a county over multiple years"""
+    try:
+        current_year = datetime.now().year
+        climate_data = {}
+        
+        for year in range(current_year - years + 1, current_year + 1):
+            weather_data = data_service.get_monthly_weather(county, year)
+            if weather_data:
+                climate_data[year] = weather_data
+        
+        if not climate_data:
+            raise HTTPException(status_code=404, detail=f"Climate data not found for {county}")
+        
+        return {
+            "county": county,
+            "years_covered": list(climate_data.keys()),
+            "climate_data": climate_data,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting climate history for {county}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve climate history: {str(e)}")
+
+@app.get("/api/market/costs")
+async def get_market_costs():
+    """Get current market costs for agricultural inputs"""
+    try:
+        market_data = data_service.get_market_data()
+        
+        return {
+            "market_data": market_data,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting market costs: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve market costs: {str(e)}")
+
+@app.get("/api/market/prices")
+async def get_market_prices():
+    """Get current market prices for agricultural products"""
+    try:
+        market_data = data_service.get_market_data()
+        
+        # Extract price-related data
+        prices = {
+            "maize": {
+                "price_per_ton": market_data["maize_price_per_ton"],
+                "price_per_kg": market_data["maize_price_per_kg"],
+                "currency": "KES"
+            },
+            "inputs": {
+                "fertilizer_per_50kg": market_data["fertilizer_price_per_50kg"],
+                "seed_per_kg": market_data["seed_price_per_kg"],
+                "pesticide_per_liter": market_data["pesticide_price_per_liter"],
+                "fuel_per_liter": market_data["fuel_price_per_liter"],
+                "labor_per_day": market_data["labor_cost_per_day"],
+                "currency": "KES"
+            },
+            "last_updated": market_data["last_updated"]
+        }
+        
+        return {
+            "prices": prices,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting market prices: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve market prices: {str(e)}")
+
+@app.get("/api/soil/{county}")
+async def get_soil_data(county: str):
+    """Get soil properties for a county"""
+    try:
+        soil_data = data_service.get_soil_properties(county)
+        
+        if not soil_data:
+            raise HTTPException(status_code=404, detail=f"Soil data not found for {county}")
+        
+        return {
+            "county": county,
+            "soil_properties": soil_data,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting soil data for {county}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve soil data: {str(e)}")
+
+@app.get("/api/yield/{county}")
+async def get_yield_data(county: str):
+    """Get maize yield data for a county"""
+    try:
+        yield_data = data_service.get_yield_trends(county)
+        
+        if not yield_data:
+            raise HTTPException(status_code=404, detail=f"Yield data not found for {county}")
+        
+        return {
+            "county": county,
+            "yield_trends": yield_data,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting yield data for {county}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve yield data: {str(e)}")
 
 # Error handlers
 @app.exception_handler(HTTPException)

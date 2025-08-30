@@ -50,157 +50,360 @@ export function InputCostCalculator({ county, score }: InputCostCalculatorProps)
   const [farmSize, setFarmSize] = useState<number>(1)
   const [customInputs, setCustomInputs] = useState<{ [key: string]: number }>({})
   const [roiAnalysis, setROIAnalysis] = useState<ROIAnalysis | null>(null)
+  const [cropCostData, setCropCostData] = useState<{ [key: string]: CropCostData }>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock crop cost data
-  const cropCostData: { [key: string]: CropCostData } = {
-    maize: {
-      cropName: "Drought-Tolerant Maize",
-      inputs: [
-        {
-          id: "seeds",
-          name: "Certified Seeds (DH04/KH500-23A)",
-          category: "seeds",
-          unitCost: 350,
-          unit: "kg",
-          recommendedQuantity: 25,
-          isOptional: false,
-          description: "Drought-tolerant hybrid maize varieties",
-        },
-        {
-          id: "dap",
-          name: "DAP Fertilizer",
-          category: "fertilizer",
-          unitCost: 5500,
-          unit: "50kg bag",
-          recommendedQuantity: 2,
-          isOptional: false,
-          description: "Diammonium Phosphate for planting",
-        },
-        {
-          id: "urea",
-          name: "Urea Fertilizer",
-          category: "fertilizer",
-          unitCost: 4800,
-          unit: "50kg bag",
-          recommendedQuantity: 1.5,
-          isOptional: false,
-          description: "Top dressing fertilizer",
-        },
-        {
-          id: "pesticide",
-          name: "Pesticide/Herbicide",
-          category: "pesticide",
-          unitCost: 1200,
-          unit: "liter",
-          recommendedQuantity: 2,
-          isOptional: true,
-          description: "Crop protection chemicals",
-        },
-        {
-          id: "labor",
-          name: "Labor (Planting to Harvest)",
-          category: "labor",
-          unitCost: 15000,
-          unit: "per acre",
-          recommendedQuantity: 1,
-          isOptional: false,
-          description: "Land preparation, planting, weeding, harvesting",
-        },
-      ],
-      expectedYield: 30,
-      marketPrice: 3200,
-      subsidyAvailable: true,
-      subsidyAmount: 6000,
-    },
-    sorghum: {
-      cropName: "Sorghum",
-      inputs: [
-        {
-          id: "seeds",
-          name: "Sorghum Seeds (Gadam/Serena)",
-          category: "seeds",
-          unitCost: 200,
-          unit: "kg",
-          recommendedQuantity: 15,
-          isOptional: false,
-          description: "Drought-tolerant sorghum varieties",
-        },
-        {
-          id: "dap",
-          name: "DAP Fertilizer",
-          category: "fertilizer",
-          unitCost: 5500,
-          unit: "50kg bag",
-          recommendedQuantity: 1,
-          isOptional: false,
-          description: "Diammonium Phosphate for planting",
-        },
-        {
-          id: "labor",
-          name: "Labor (Planting to Harvest)",
-          category: "labor",
-          unitCost: 12000,
-          unit: "per acre",
-          recommendedQuantity: 1,
-          isOptional: false,
-          description: "Land preparation, planting, weeding, harvesting",
-        },
-      ],
-      expectedYield: 20,
-      marketPrice: 2800,
-      subsidyAvailable: true,
-      subsidyAmount: 3000,
-    },
-    beans: {
-      cropName: "Common Beans",
-      inputs: [
-        {
-          id: "seeds",
-          name: "Bean Seeds (KAT B1/Rosecoco)",
-          category: "seeds",
-          unitCost: 400,
-          unit: "kg",
-          recommendedQuantity: 60,
-          isOptional: false,
-          description: "High-yielding bean varieties",
-        },
-        {
-          id: "dap",
-          name: "DAP Fertilizer",
-          category: "fertilizer",
-          unitCost: 5500,
-          unit: "50kg bag",
-          recommendedQuantity: 1,
-          isOptional: false,
-          description: "Diammonium Phosphate for planting",
-        },
-        {
-          id: "pesticide",
-          name: "Fungicide/Insecticide",
-          category: "pesticide",
-          unitCost: 1500,
-          unit: "liter",
-          recommendedQuantity: 1.5,
-          isOptional: false,
-          description: "Disease and pest control",
-        },
-        {
-          id: "labor",
-          name: "Labor (Planting to Harvest)",
-          category: "labor",
-          unitCost: 18000,
-          unit: "per acre",
-          recommendedQuantity: 1,
-          isOptional: false,
-          description: "Land preparation, planting, weeding, harvesting",
-        },
-      ],
-      expectedYield: 10,
-      marketPrice: 8500,
-      subsidyAvailable: false,
-      subsidyAmount: 0,
-    },
+  // Show loading state while fetching data
+  if (isLoading) {
+    return (
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl">
+            <Calculator className="h-5 w-5 text-primary flex-shrink-0" />
+            <span className="text-balance">Input Cost Calculator for {county}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading market data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
+
+  // Fetch real market data from backend
+  useEffect(() => {
+    if (!county) return
+
+    const fetchMarketData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch market costs and prices
+        const [costsResponse, pricesResponse] = await Promise.all([
+          fetch('/api/market/costs'),
+          fetch('/api/market/prices')
+        ]);
+
+        if (costsResponse.ok && pricesResponse.ok) {
+          const costs = await costsResponse.json();
+          const prices = await pricesResponse.json();
+
+          const marketCosts = costs.market_data;
+          const marketPrices = prices.prices;
+
+          // Update crop cost data with real market values
+          setCropCostData({
+            maize: {
+              cropName: "Drought-Tolerant Maize",
+              inputs: [
+                {
+                  id: "seeds",
+                  name: "Certified Seeds (DH04/KH500-23A)",
+                  category: "seeds",
+                  unitCost: marketPrices.inputs?.seed_per_kg || 350,
+                  unit: "kg",
+                  recommendedQuantity: 25,
+                  isOptional: false,
+                  description: "Drought-tolerant hybrid maize varieties",
+                },
+                {
+                  id: "dap",
+                  name: "DAP Fertilizer",
+                  category: "fertilizer",
+                  unitCost: marketPrices.inputs?.fertilizer_per_50kg || 5500,
+                  unit: "50kg bag",
+                  recommendedQuantity: 2,
+                  isOptional: false,
+                  description: "Diammonium Phosphate for planting",
+                },
+                {
+                  id: "urea",
+                  name: "Urea Fertilizer",
+                  category: "fertilizer",
+                  unitCost: marketPrices.inputs?.fertilizer_per_50kg || 4800,
+                  unit: "50kg bag",
+                  recommendedQuantity: 1.5,
+                  isOptional: false,
+                  description: "Top dressing fertilizer",
+                },
+                {
+                  id: "pesticide",
+                  name: "Pesticide/Herbicide",
+                  category: "pesticide",
+                  unitCost: marketPrices.inputs?.pesticide_per_liter || 1200,
+                  unit: "liter",
+                  recommendedQuantity: 2,
+                  isOptional: true,
+                  description: "Crop protection chemicals",
+                },
+                {
+                  id: "labor",
+                  name: "Labor (Planting to Harvest)",
+                  category: "labor",
+                  unitCost: marketPrices.inputs?.labor_per_day || 15000,
+                  unit: "per acre",
+                  recommendedQuantity: 1,
+                  isOptional: false,
+                  description: "Land preparation, planting, weeding, harvesting",
+                },
+              ],
+              expectedYield: 30,
+              marketPrice: marketPrices.maize?.price_per_kg || 3200,
+              subsidyAvailable: true,
+              subsidyAmount: 6000,
+            },
+            sorghum: {
+              cropName: "Sorghum",
+              inputs: [
+                {
+                  id: "seeds",
+                  name: "Sorghum Seeds (Gadam/Serena)",
+                  category: "seeds",
+                  unitCost: marketPrices.inputs?.seed_per_kg || 200,
+                  unit: "kg",
+                  recommendedQuantity: 15,
+                  isOptional: false,
+                  description: "Drought-tolerant sorghum varieties",
+                },
+                {
+                  id: "dap",
+                  name: "DAP Fertilizer",
+                  category: "fertilizer",
+                  unitCost: marketPrices.inputs?.fertilizer_per_50kg || 5500,
+                  unit: "50kg bag",
+                  recommendedQuantity: 1,
+                  isOptional: false,
+                  description: "Diammonium Phosphate for planting",
+                },
+                {
+                  id: "labor",
+                  name: "Labor (Planting to Harvest)",
+                  category: "labor",
+                  unitCost: marketPrices.inputs?.labor_per_day || 12000,
+                  unit: "per acre",
+                  recommendedQuantity: 1,
+                  isOptional: false,
+                  description: "Land preparation, planting, weeding, harvesting",
+                },
+              ],
+              expectedYield: 20,
+              marketPrice: marketPrices.maize?.price_per_kg || 2800,
+              subsidyAvailable: true,
+              subsidyAmount: 4000,
+            },
+            beans: {
+              cropName: "Common Beans",
+              inputs: [
+                {
+                  id: "seeds",
+                  name: "Bean Seeds (KAT B1/Rosecoco)",
+                  category: "seeds",
+                  unitCost: 400,
+                  unit: "kg",
+                  recommendedQuantity: 60,
+                  isOptional: false,
+                  description: "High-yielding bean varieties",
+                },
+                {
+                  id: "dap",
+                  name: "DAP Fertilizer",
+                  category: "fertilizer",
+                  unitCost: 5500,
+                  unit: "50kg bag",
+                  recommendedQuantity: 1,
+                  isOptional: false,
+                  description: "Diammonium Phosphate for planting",
+                },
+                {
+                  id: "pesticide",
+                  name: "Fungicide/Insecticide",
+                  category: "pesticide",
+                  unitCost: 1500,
+                  unit: "liter",
+                  recommendedQuantity: 1.5,
+                  isOptional: false,
+                  description: "Disease and pest control",
+                },
+                {
+                  id: "labor",
+                  name: "Labor (Planting to Harvest)",
+                  category: "labor",
+                  unitCost: 18000,
+                  unit: "per acre",
+                  recommendedQuantity: 1,
+                  isOptional: false,
+                  description: "Land preparation, planting, weeding, harvesting",
+                },
+              ],
+              expectedYield: 10,
+              marketPrice: 8500,
+              subsidyAvailable: false,
+              subsidyAmount: 0,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch market data:', error);
+        // Fallback to default costs if API fails
+        setCropCostData({
+          maize: {
+            cropName: "Drought-Tolerant Maize",
+            inputs: [
+              {
+                id: "seeds",
+                name: "Certified Seeds (DH04/KH500-23A)",
+                category: "seeds",
+                unitCost: 350,
+                unit: "kg",
+                recommendedQuantity: 25,
+                isOptional: false,
+                description: "Drought-tolerant hybrid maize varieties",
+              },
+              {
+                id: "dap",
+                name: "DAP Fertilizer",
+                category: "fertilizer",
+                unitCost: 5500,
+                unit: "50kg bag",
+                recommendedQuantity: 2,
+                isOptional: false,
+                description: "Diammonium Phosphate for planting",
+              },
+              {
+                id: "urea",
+                name: "Urea Fertilizer",
+                category: "fertilizer",
+                unitCost: 4800,
+                unit: "50kg bag",
+                recommendedQuantity: 1.5,
+                isOptional: false,
+                description: "Top dressing fertilizer",
+              },
+              {
+                id: "pesticide",
+                name: "Pesticide/Herbicide",
+                category: "pesticide",
+                unitCost: 1200,
+                unit: "liter",
+                recommendedQuantity: 2,
+                isOptional: true,
+                description: "Crop protection chemicals",
+              },
+              {
+                id: "labor",
+                name: "Labor (Planting to Harvest)",
+                category: "labor",
+                unitCost: 15000,
+                unit: "per acre",
+                recommendedQuantity: 1,
+                isOptional: false,
+                description: "Land preparation, planting, weeding, harvesting",
+              },
+            ],
+            expectedYield: 30,
+            marketPrice: 3200,
+            subsidyAvailable: true,
+            subsidyAmount: 6000,
+          },
+          sorghum: {
+            cropName: "Sorghum",
+            inputs: [
+              {
+                id: "seeds",
+                name: "Sorghum Seeds (Gadam/Serena)",
+                category: "seeds",
+                unitCost: 200,
+                unit: "kg",
+                recommendedQuantity: 15,
+                isOptional: false,
+                description: "Drought-tolerant sorghum varieties",
+              },
+              {
+                id: "dap",
+                name: "DAP Fertilizer",
+                category: "fertilizer",
+                unitCost: 5500,
+                unit: "50kg bag",
+                recommendedQuantity: 1,
+                isOptional: false,
+                description: "Diammonium Phosphate for planting",
+              },
+              {
+                id: "labor",
+                name: "Labor (Planting to Harvest)",
+                category: "labor",
+                unitCost: 12000,
+                unit: "per acre",
+                recommendedQuantity: 1,
+                isOptional: false,
+                description: "Land preparation, planting, weeding, harvesting",
+              },
+            ],
+            expectedYield: 20,
+            marketPrice: 2800,
+            subsidyAvailable: true,
+            subsidyAmount: 4000,
+          },
+          beans: {
+            cropName: "Common Beans",
+            inputs: [
+              {
+                id: "seeds",
+                name: "Bean Seeds (KAT B1/Rosecoco)",
+                category: "seeds",
+                unitCost: 400,
+                unit: "kg",
+                recommendedQuantity: 60,
+                isOptional: false,
+                description: "High-yielding bean varieties",
+              },
+              {
+                id: "dap",
+                name: "DAP Fertilizer",
+                category: "fertilizer",
+                unitCost: 5500,
+                unit: "50kg bag",
+                recommendedQuantity: 1,
+                isOptional: false,
+                description: "Diammonium Phosphate for planting",
+              },
+              {
+                id: "pesticide",
+                name: "Fungicide/Insecticide",
+                category: "pesticide",
+                unitCost: 1500,
+                unit: "liter",
+                recommendedQuantity: 1.5,
+                isOptional: false,
+                description: "Disease and pest control",
+              },
+              {
+                id: "labor",
+                name: "Labor (Planting to Harvest)",
+                category: "labor",
+                unitCost: 18000,
+                unit: "per acre",
+                recommendedQuantity: 1,
+                isOptional: false,
+                description: "Land preparation, planting, weeding, harvesting",
+              },
+            ],
+            expectedYield: 10,
+            marketPrice: 8500,
+            subsidyAvailable: false,
+            subsidyAmount: 0,
+          },
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMarketData();
+  }, [county]); // Added county dependency
 
   // Government subsidy programs
   const subsidyPrograms = [
@@ -511,11 +714,10 @@ export function InputCostCalculator({ county, score }: InputCostCalculatorProps)
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">Safety margin:</span>
                           <span
-                            className={`font-medium text-sm ${
-                              ((currentCropData?.expectedYield || 0) * farmSize - roiAnalysis.breakEvenYield) > 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
+                            className={`font-medium text-sm ${((currentCropData?.expectedYield || 0) * farmSize - roiAnalysis.breakEvenYield) > 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                              }`}
                           >
                             {(
                               (((currentCropData?.expectedYield || 0) * farmSize - roiAnalysis.breakEvenYield) /

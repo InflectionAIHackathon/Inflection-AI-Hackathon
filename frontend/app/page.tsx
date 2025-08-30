@@ -12,113 +12,10 @@ import { DataVisualization } from "@/components/data-visualization"
 import { WeatherIntegration } from "@/components/weather-integration"
 import { CropRecommendationEngine } from "@/components/crop-recommendation-engine"
 import { InputCostCalculator } from "@/components/input-cost-calculator"
+import { IrrigationRecommendations } from '@/components/irrigation-recommendations'
 
 // API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
-// Kenyan counties data - will be fetched from backend
-const kenyanCounties = [
-  "Baringo",
-  "Bomet",
-  "Bungoma",
-  "Busia",
-  "Elgeyo-Marakwet",
-  "Embu",
-  "Garissa",
-  "Homa Bay",
-  "Isiolo",
-  "Kajiado",
-  "Kakamega",
-  "Kericho",
-  "Kiambu",
-  "Kilifi",
-  "Kirinyaga",
-  "Kisii",
-  "Kisumu",
-  "Kitui",
-  "Kwale",
-  "Laikipia",
-  "Lamu",
-  "Machakos",
-  "Makueni",
-  "Mandera",
-  "Marsabit",
-  "Meru",
-  "Migori",
-  "Mombasa",
-  "Murang'a",
-  "Nairobi",
-  "Nakuru",
-  "Nandi",
-  "Narok",
-  "Nyamira",
-  "Nyandarua",
-  "Nyeri",
-  "Samburu",
-  "Siaya",
-  "Taita-Taveta",
-  "Tana River",
-  "Tharaka-Nithi",
-  "Trans Nzoia",
-  "Turkana",
-  "Uasin Gishu",
-  "Vihiga",
-  "Wajir",
-  "West Pokot",
-]
-
-// County coordinates for geolocation (simplified - in real app, use proper GIS data)
-const COUNTY_COORDINATES: { [key: string]: { lat: number; lng: number; radius: number } } = {
-  "Nairobi": { lat: -1.2921, lng: 36.8219, radius: 50 },
-  "Mombasa": { lat: -4.0435, lng: 39.6682, radius: 40 },
-  "Kisumu": { lat: -0.1022, lng: 34.7617, radius: 45 },
-  "Nakuru": { lat: -0.3031, lng: 36.0800, radius: 35 },
-  "Eldoret": { lat: 0.5204, lng: 35.2699, radius: 30 },
-  "Thika": { lat: -1.0333, lng: 37.0833, radius: 25 },
-  "Kakamega": { lat: 0.2833, lng: 34.7500, radius: 30 },
-  "Kisii": { lat: -0.6833, lng: 34.7667, radius: 25 },
-  "Kericho": { lat: -0.3667, lng: 35.2833, radius: 25 },
-  "Nyeri": { lat: -0.4167, lng: 36.9500, radius: 25 },
-  "Machakos": { lat: -1.5167, lng: 37.2667, radius: 30 },
-  "Embu": { lat: -0.5333, lng: 37.4500, radius: 25 },
-  "Meru": { lat: 0.0500, lng: 37.6500, radius: 30 },
-  "Narok": { lat: -1.0833, lng: 35.8667, radius: 40 },
-  "Kajiado": { lat: -1.8500, lng: 36.7833, radius: 35 },
-  "Garissa": { lat: -0.4500, lng: 39.6500, radius: 50 },
-  "Wajir": { lat: 1.7500, lng: 40.0500, radius: 60 },
-  "Mandera": { lat: 3.9333, lng: 41.8500, radius: 70 },
-  "Marsabit": { lat: 2.3333, lng: 37.9833, radius: 80 },
-  "Isiolo": { lat: 0.3500, lng: 37.5833, radius: 45 },
-  "Lamu": { lat: -2.2719, lng: 40.9020, radius: 35 },
-  "Kilifi": { lat: -3.6333, lng: 39.8500, radius: 40 },
-  "Kwale": { lat: -4.1833, lng: 39.4500, radius: 35 },
-  "Taita-Taveta": { lat: -3.4000, lng: 38.3667, radius: 45 },
-  "Tana River": { lat: -1.5000, lng: 40.0000, radius: 60 },
-  "Bungoma": { lat: 0.5667, lng: 34.5667, radius: 30 },
-  "Busia": { lat: 0.4667, lng: 34.1167, radius: 25 },
-  "Vihiga": { lat: 0.0833, lng: 34.7167, radius: 25 },
-  "Bomet": { lat: -0.7833, lng: 35.3333, radius: 25 },
-  "Baringo": { lat: 0.4667, lng: 35.9667, radius: 35 },
-  "Laikipia": { lat: 0.2000, lng: 36.8000, radius: 40 },
-  "Nandi": { lat: 0.2000, lng: 35.1000, radius: 25 },
-  "Uasin Gishu": { lat: 0.5167, lng: 35.2833, radius: 30 },
-  "Trans Nzoia": { lat: 1.0167, lng: 34.9833, radius: 30 },
-  "West Pokot": { lat: 1.2500, lng: 35.1167, radius: 35 },
-  "Samburu": { lat: 1.1000, lng: 36.6833, radius: 45 },
-  "Turkana": { lat: 3.1167, lng: 35.6000, radius: 80 },
-  "Elgeyo-Marakwet": { lat: 0.5167, lng: 35.2833, radius: 30 },
-  "Kirinyaga": { lat: -0.5000, lng: 37.3167, radius: 25 },
-  "Murang'a": { lat: -0.7167, lng: 37.1500, radius: 25 },
-  "Kiambu": { lat: -1.1667, lng: 36.8333, radius: 25 },
-  "Nyandarua": { lat: -0.5333, lng: 36.4500, radius: 30 },
-  "Kitui": { lat: -1.3667, lng: 38.0167, radius: 40 },
-  "Makueni": { lat: -1.8000, lng: 37.6167, radius: 35 },
-  "Tharaka-Nithi": { lat: -0.3000, lng: 37.6500, radius: 30 },
-  "Migori": { lat: -1.0667, lng: 34.4667, radius: 30 },
-  "Homa Bay": { lat: -0.5333, lng: 34.4500, radius: 30 },
-  "Siaya": { lat: 0.0667, lng: 34.2833, radius: 25 },
-  "Nyamira": { lat: -0.5667, lng: 34.9500, radius: 25 },
-}
 
 export default function AgriAdaptDashboard() {
   const [selectedCounty, setSelectedCounty] = useState<string>("")
@@ -131,23 +28,46 @@ export default function AgriAdaptDashboard() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [locationError, setLocationError] = useState<string>("")
-  const [counties, setCounties] = useState<string[]>(kenyanCounties)
+  const [counties, setCounties] = useState<string[]>([])
+  const [countyCoordinates, setCountyCoordinates] = useState<{ [key: string]: { lat: number; lng: number; radius: number } }>({})
 
-  // Fetch counties from backend on component mount
+  // Fetch counties on component mount
   useEffect(() => {
     fetchCounties()
   }, [])
 
+  // Auto-reload data when county changes
+  useEffect(() => {
+    if (selectedCounty && showResilienceScore) {
+      // Automatically reload resilience score when county changes
+      handleCheckResilienceScore()
+    }
+  }, [selectedCounty]) // Only depend on selectedCounty, not showResilienceScore
+
   const fetchCounties = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/counties`)
-      if (response.ok) {
-        const data = await response.json()
-        setCounties(data.counties || kenyanCounties)
+      if (!response.ok) {
+        throw new Error('Failed to fetch counties')
       }
+      const data = await response.json()
+      const fetchedCounties = data.counties || []
+      setCounties(fetchedCounties)
+
+      // Generate approximate coordinates for fetched counties
+      const coordinates: { [key: string]: { lat: number; lng: number; radius: number } } = {}
+      data.counties.forEach((county: string, index: number) => {
+        // Simple coordinate generation based on index for demonstration
+        coordinates[county] = {
+          lat: -1.0 + (index * 0.1), // Rough Kenya latitude range
+          lng: 34.0 + (index * 0.2),  // Rough Kenya longitude range
+          radius: 30 + Math.random() * 20 // Random radius between 30-50km
+        }
+      })
+      setCountyCoordinates(coordinates)
     } catch (error) {
-      console.log("Using fallback counties list")
-      // Keep using the hardcoded list if API fails
+      console.log("Failed to fetch counties from backend")
+      setCounties([])
     }
   }
 
@@ -173,7 +93,7 @@ export default function AgriAdaptDashboard() {
     let closestCounty: string | null = null
     let minDistance = Infinity
 
-    for (const [county, coords] of Object.entries(COUNTY_COORDINATES)) {
+    for (const [county, coords] of Object.entries(countyCoordinates)) {
       const distance = calculateDistance(lat, lng, coords.lat, coords.lng)
       if (distance <= coords.radius && distance < minDistance) {
         minDistance = distance
@@ -185,6 +105,11 @@ export default function AgriAdaptDashboard() {
   }
 
   const handleLocationDetection = () => {
+    if (counties.length === 0) {
+      setLocationError("Please wait for counties to load from the backend.")
+      return
+    }
+
     setIsLoading(true)
     setLocationError("")
 
@@ -268,39 +193,13 @@ export default function AgriAdaptDashboard() {
           confidence: prediction.confidence_score ? Math.round(prediction.confidence_score * 100) : 85
         })
       } else {
-        // Fallback to mock data if API fails
-        const mockScores: { [key: string]: { score: number; confidence: number } } = {
-          Nairobi: { score: 78, confidence: 85 },
-          Mombasa: { score: 65, confidence: 78 },
-          Kisumu: { score: 45, confidence: 72 },
-          Nakuru: { score: 82, confidence: 90 },
-          Eldoret: { score: 58, confidence: 80 },
-        }
-
-        const countyData = mockScores[selectedCounty] || {
-          score: Math.floor(Math.random() * 100),
-          confidence: Math.floor(Math.random() * 30) + 70,
-        }
-
-        setResilienceData(countyData)
+        setLocationError("Failed to get prediction from backend. Please try again.")
+        setShowResilienceScore(false)
       }
     } catch (error) {
       console.error("Error fetching prediction:", error)
-      // Fallback to mock data
-      const mockScores: { [key: string]: { score: number; confidence: number } } = {
-        Nairobi: { score: 78, confidence: 85 },
-        Mombasa: { score: 65, confidence: 78 },
-        Kisumu: { score: 45, confidence: 72 },
-        Nakuru: { score: 82, confidence: 90 },
-        Eldoret: { score: 58, confidence: 80 },
-      }
-
-      const countyData = mockScores[selectedCounty] || {
-        score: Math.floor(Math.random() * 100),
-        confidence: Math.floor(Math.random() * 30) + 70,
-      }
-
-      setResilienceData(countyData)
+      setLocationError("Network error. Please check your connection and try again.")
+      setShowResilienceScore(false)
     } finally {
       setIsLoading(false)
     }
@@ -343,7 +242,7 @@ export default function AgriAdaptDashboard() {
             {/* County Dropdown */}
             <Select value={selectedCounty} onValueChange={setSelectedCounty}>
               <SelectTrigger className="w-full min-h-[44px] touch-manipulation text-base">
-                <SelectValue placeholder="Choose your county" />
+                <SelectValue placeholder={counties.length > 0 ? "Choose your county" : "Loading counties..."} />
               </SelectTrigger>
               <SelectContent>
                 {filteredCounties.map((county) => (
@@ -358,7 +257,7 @@ export default function AgriAdaptDashboard() {
               <Button
                 onClick={handleLocationDetection}
                 variant="outline"
-                disabled={isLoading}
+                disabled={isLoading || counties.length === 0}
                 className="flex-1 flex items-center gap-2 bg-transparent min-h-[44px] touch-manipulation text-sm"
               >
                 {isLoading ? (
@@ -442,15 +341,41 @@ export default function AgriAdaptDashboard() {
         {showResilienceScore && selectedCounty && (
           <>
             <ResilienceGauge
+              key={`resilience-${selectedCounty}`}
               score={resilienceData.score}
               confidence={resilienceData.confidence}
               county={selectedCounty}
             />
-            <WeatherIntegration score={resilienceData.score} county={selectedCounty} />
-            <CropRecommendationEngine score={resilienceData.score} county={selectedCounty} />
-            <InputCostCalculator score={resilienceData.score} county={selectedCounty} />
-            <RecommendationsPanel score={resilienceData.score} county={selectedCounty} />
-            <DataVisualization score={resilienceData.score} county={selectedCounty} />
+            <IrrigationRecommendations
+              key={`irrigation-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
+            <WeatherIntegration
+              key={`weather-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
+            <CropRecommendationEngine
+              key={`crops-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
+            <InputCostCalculator
+              key={`costs-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
+            <RecommendationsPanel
+              key={`recommendations-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
+            <DataVisualization
+              key={`visualization-${selectedCounty}`}
+              score={resilienceData.score}
+              county={selectedCounty}
+            />
           </>
         )}
       </main>

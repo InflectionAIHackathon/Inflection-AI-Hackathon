@@ -63,6 +63,7 @@ venv.bak/
 *.swp
 *.swo
 *~
+.cursor/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -113,28 +114,51 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
-# Cursor IDE
-.cursor/
-
 # Node.js dependencies
-/node_modules
-
-# Next.js
-/.next/
-/out/
-
-# production
-/build
-
-# debug
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# vercel
-.vercel
+# Next.js
+.next/
+/out/
+/build
 
-# typescript
+# Package lock files (keep only one)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database files
+agri_adapt_ai.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated reports and analysis
+reports/
+analysis/
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.pdf
+
+# Test files
+test_frontend.py
+test_*.py
+
+# Docker
+.dockerignore
+docker-compose*.yml
+Dockerfile*
+
+# Documentation build
+docs/_build/
+docs/api/_build/
