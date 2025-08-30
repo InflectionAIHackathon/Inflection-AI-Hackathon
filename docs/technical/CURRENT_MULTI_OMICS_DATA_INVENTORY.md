@@ -8,15 +8,17 @@ This document provides a comprehensive technical inventory of the multi-omics da
 
 ## 🔬 **Available Omics Data Types**
 
-### **1. Phenomics Data** 🌱 *(Primary Omics Layer)*
+### **1. Phenomics Data** 🌱 _(Primary Omics Layer)_
 
 #### **Data Source**: Field Observations & Agricultural Statistics
+
 - **Content**: Physical traits, growth patterns, yield measurements
 - **Format**: CSV files with structured agricultural data
 - **Update Frequency**: Monthly to annual
 - **Coverage**: 2019-2023 (5 years)
 
 #### **Key Phenomic Variables**:
+
 ```python
 phenomics_variables = {
     'crop_traits': {
@@ -34,6 +36,7 @@ phenomics_variables = {
 ```
 
 #### **Data Quality Metrics**:
+
 - **Completeness**: 95% (missing data in some counties for specific months)
 - **Accuracy**: Validated against FAOSTAT official statistics
 - **Spatial Coverage**: 47 Kenyan counties
@@ -41,15 +44,17 @@ phenomics_variables = {
 
 ---
 
-### **2. Environmental Omics** 🌍 *(Secondary Omics Layer)*
+### **2. Environmental Omics** 🌍 _(Secondary Omics Layer)_
 
 #### **Data Source**: Meteorological Stations & Satellite Data
+
 - **Content**: Climate variables, weather patterns, environmental stress
 - **Format**: CSV files with time-series data
 - **Update Frequency**: Daily to monthly
 - **Coverage**: 2019-2023 (5 years)
 
 #### **Key Environmental Variables**:
+
 ```python
 environmental_variables = {
     'climate_metrics': {
@@ -75,6 +80,7 @@ environmental_variables = {
 ```
 
 #### **Data Quality Metrics**:
+
 - **Completeness**: 98% (comprehensive coverage across all counties)
 - **Accuracy**: Cross-validated with CHIRPS satellite data
 - **Spatial Coverage**: 47 Kenyan counties
@@ -82,15 +88,17 @@ environmental_variables = {
 
 ---
 
-### **3. Soil Omics** 🌱 *(Tertiary Omics Layer)*
+### **3. Soil Omics** 🌱 _(Tertiary Omics Layer)_
 
 #### **Data Source**: ISRIC World Soil Information Database
+
 - **Content**: Physical and chemical soil properties
 - **Format**: CSV files with geospatial soil data
 - **Update Frequency**: Static (historical soil surveys)
 - **Coverage**: Kenya-wide with point sampling
 
 #### **Key Soil Variables**:
+
 ```python
 soil_variables = {
     'physical_properties': {
@@ -116,6 +124,7 @@ soil_variables = {
 ```
 
 #### **Data Quality Metrics**:
+
 - **Completeness**: 85% (some missing values in chemical properties)
 - **Accuracy**: Laboratory-validated soil analysis
 - **Spatial Coverage**: Point samples across Kenya
@@ -123,15 +132,17 @@ soil_variables = {
 
 ---
 
-### **4. Water Omics** 💧 *(Quaternary Omics Layer)*
+### **4. Water Omics** 💧 _(Quaternary Omics Layer)_
 
 #### **Data Source**: CHIRPS Satellite Data & Field Measurements
+
 - **Content**: Water availability, irrigation needs, water stress
 - **Format**: GeoTIFF files (CHIRPS) + CSV (processed)
 - **Update Frequency**: Monthly (CHIRPS), daily (field)
 - **Coverage**: Kenya-wide with 5km resolution
 
 #### **Key Water Variables**:
+
 ```python
 water_variables = {
     'availability_metrics': {
@@ -152,6 +163,7 @@ water_variables = {
 ```
 
 #### **Data Quality Metrics**:
+
 - **Completeness**: 99% (comprehensive satellite coverage)
 - **Accuracy**: Validated against ground measurements
 - **Spatial Coverage**: 5km grid resolution across Kenya
@@ -164,6 +176,7 @@ water_variables = {
 ### **Current Integration Level**: **Intermediate Integration (Feature-Level)**
 
 #### **Integration Method**:
+
 ```python
 integration_status = {
     'data_fusion': 'Feature-level integration completed',
@@ -175,6 +188,7 @@ integration_status = {
 ```
 
 #### **Integrated Dataset**: `master_water_scarcity_dataset_realistic.csv`
+
 - **Size**: 971 KB (1,202 records)
 - **Dimensions**: 67 variables × 1,202 observations
 - **Coverage**: 47 counties × 5 years × 12 months
@@ -185,6 +199,7 @@ integration_status = {
 ## 📊 **Data Processing Pipeline**
 
 ### **1. Data Collection Phase**
+
 ```python
 collection_pipeline = {
     'phenomics': 'FAOSTAT API + County agricultural reports',
@@ -195,6 +210,7 @@ collection_pipeline = {
 ```
 
 ### **2. Data Processing Phase**
+
 ```python
 processing_pipeline = {
     'cleaning': 'Remove outliers, handle missing values',
@@ -205,6 +221,7 @@ processing_pipeline = {
 ```
 
 ### **3. Data Integration Phase**
+
 ```python
 integration_pipeline = {
     'spatial_alignment': 'Coordinate-based county matching',
@@ -219,12 +236,14 @@ integration_pipeline = {
 ## 🎯 **Multi-Omics Applications**
 
 ### **Current Use Cases**:
+
 1. **Maize Yield Prediction**: Using environmental + soil + water omics
 2. **Drought Risk Assessment**: Water stress + climate stress integration
 3. **Irrigation Optimization**: Water availability + crop needs analysis
 4. **Climate Adaptation**: Historical patterns + future projections
 
 ### **Future Multi-Omics Expansion**:
+
 1. **Transcriptomics**: Gene expression under stress conditions
 2. **Proteomics**: Stress response protein identification
 3. **Metabolomics**: Drought response metabolite profiling
@@ -237,6 +256,7 @@ integration_pipeline = {
 ### **Overall Quality Score**: **92/100**
 
 #### **Quality Breakdown**:
+
 ```python
 quality_metrics = {
     'completeness': 95,      # Data coverage across all dimensions
@@ -248,6 +268,7 @@ quality_metrics = {
 ```
 
 #### **Data Gaps Identified**:
+
 1. **Soil Properties**: Missing values in some chemical properties
 2. **Temporal Coverage**: Limited to 2019-2023 period
 3. **Spatial Resolution**: County-level aggregation (not field-level)
@@ -258,18 +279,21 @@ quality_metrics = {
 ## 🚀 **Next Steps for Multi-Omics Enhancement**
 
 ### **Phase 1: Data Quality Improvement (Months 1-3)**
+
 - [ ] Complete soil property data through additional sampling
 - [ ] Extend temporal coverage to 10+ years
 - [ ] Implement field-level spatial resolution
 - [ ] Add data validation protocols
 
 ### **Phase 2: Biological Omics Addition (Months 4-12)**
+
 - [ ] **Transcriptomics**: RNA-seq for stress response genes
 - [ ] **Proteomics**: Mass spectrometry for stress proteins
 - [ ] **Metabolomics**: LC-MS for stress metabolites
 - [ ] **Phenomics**: High-throughput field phenotyping
 
 ### **Phase 3: Advanced Integration (Months 13-24)**
+
 - [ ] **Causal Inference**: Structural causal models
 - [ ] **Deep Learning**: Neural networks for complex patterns
 - [ ] **Real-time Monitoring**: IoT sensor integration
@@ -280,6 +304,7 @@ quality_metrics = {
 ## 📋 **Data Access & Usage**
 
 ### **File Locations**:
+
 ```python
 data_structure = {
     'master_dataset': 'data/processed/master_water_scarcity_dataset_realistic.csv',
@@ -291,12 +316,14 @@ data_structure = {
 ```
 
 ### **Data Formats**:
+
 - **Primary**: CSV (tabular data)
 - **Secondary**: GeoTIFF (satellite imagery)
 - **Metadata**: JSON (data descriptions)
 - **Documentation**: Markdown (technical guides)
 
 ### **Access Methods**:
+
 1. **Direct File Access**: Local file system
 2. **API Endpoints**: Flask-based REST API
 3. **Dashboard Interface**: Web-based visualization
@@ -324,6 +351,6 @@ The next phase should focus on **adding biological omics layers** to achieve tru
 
 ---
 
-*Document Version: 1.0*  
-*Last Updated: August 30, 2025*  
-*Maintainer: Agri-Adapt AI Team* 🧬🔬
+_Document Version: 1.0_  
+_Last Updated: August 30, 2025_  
+_Maintainer: Agri-Adapt AI Team_ 🧬🔬
