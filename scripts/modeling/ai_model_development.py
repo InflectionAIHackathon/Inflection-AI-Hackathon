@@ -42,7 +42,7 @@ class MaizeResilienceModel:
         self.target_name = 'Maize_Yield_tonnes_ha'
         self.is_trained = False
         
-    def prepare_modeling_data(self, data_path="data/master_water_scarcity_dataset_realistic.csv"):
+    def prepare_modeling_data(self, data_path="data/master_water_scarcity_dataset.csv"):
         """Prepare data for modeling"""
         logger.info("📊 Preparing data for modeling...")
         

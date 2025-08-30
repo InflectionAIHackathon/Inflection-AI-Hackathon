@@ -86,9 +86,9 @@ def merge_water_scarcity_dashboard_data():
     dashboard_dir = Path("data/water_scarcity_dashboard")
     
     # Read all three datasets
-    temperature_data = pl.read_csv(dashboard_dir / "temperature_data.csv")
-    irrigation_data = pl.read_csv(dashboard_dir / "irrigation_need_data.csv")
-    water_stress_data = pl.read_csv(dashboard_dir / "water_stress_index_data.csv")
+    temperature_data = pl.read_csv(dashboard_dir / "temperature_data_real.csv")
+    irrigation_data = pl.read_csv(dashboard_dir / "irrigation_need_data_real.csv")
+    water_stress_data = pl.read_csv(dashboard_dir / "water_stress_index_data_real.csv")
     
     # Merge datasets on County + Year + Month
     merged_data = temperature_data.join(
@@ -110,7 +110,7 @@ def integrate_maize_data():
     """Integrate county-level maize yields data."""
     logger.info("🌽 Integrating maize production data...")
     
-    maize_file = Path("data/county_maize_yields_2019-2023.csv")
+    maize_file = Path("data/processed/county_maize_yields_2019-2023.csv")
     
     if maize_file.exists():
         maize_data = pl.read_csv(maize_file)
@@ -147,7 +147,7 @@ def aggregate_soil_data_by_county():
     """Aggregate soil properties data to county level."""
     logger.info("🌱 Aggregating soil properties by county...")
     
-    soil_file = Path("data/kenya_soil_properties_isric.csv")
+    soil_file = Path("data/processed/kenya_soil_properties_isric.csv")
     
     if soil_file.exists():
         soil_data = pl.read_csv(soil_file)
@@ -501,10 +501,10 @@ def calculate_composite_metrics(df):
     
     # Irrigation Priority Score (0-100)
     df = df.with_columns([
-        pl.when(pl.col("Monthly_Irrigation_Needed").is_null())
+        pl.when(pl.col("Monthly_Irrigation_Needed_Real").is_null())
         .then(pl.lit(50))  # Default middle value
         .otherwise(
-            pl.when(pl.col("Monthly_Irrigation_Needed") == "Yes")
+            pl.when(pl.col("Monthly_Irrigation_Needed_Real") == "Yes")
             .then(pl.lit(75))  # High priority
             .otherwise(pl.lit(25))  # Low priority
         ).alias("Irrigation_Priority_Score")
