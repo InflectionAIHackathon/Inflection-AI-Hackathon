@@ -152,12 +152,23 @@ class MaizeResilienceModel:
         """Load a trained model and scaler"""
         model_data = joblib.load(filepath)
         
+        # Handle different model save formats
         self.model = model_data['model']
         self.scaler = model_data['scaler']
         self.feature_names = model_data['feature_names']
-        self.is_trained = model_data['is_trained']
+        
+        # Check if is_trained exists, otherwise infer from model availability
+        if 'is_trained' in model_data:
+            self.is_trained = model_data['is_trained']
+        else:
+            # If model exists and has feature_importances_, it's trained
+            self.is_trained = (self.model is not None and 
+                              hasattr(self.model, 'feature_importances_') and 
+                              self.feature_names is not None)
         
         logger.info(f"Model loaded from {filepath}")
+        logger.info(f"Model trained status: {self.is_trained}")
+        logger.info(f"Feature names: {self.feature_names}")
     
     def get_feature_importance(self):
         """Get feature importance scores"""
