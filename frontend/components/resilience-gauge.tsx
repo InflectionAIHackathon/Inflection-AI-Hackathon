@@ -57,20 +57,23 @@ export function ResilienceGauge({ score, confidence, county }: ResilienceGaugePr
 
   // Determine color based on score ranges
   const getScoreColor = (score: number) => {
-    if (score >= 70) return "text-green-600"
-    if (score >= 50) return "text-orange-500"
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-blue-600"
+    if (score >= 40) return "text-orange-500"
     return "text-red-500"
   }
 
   const getGaugeColor = (score: number) => {
-    if (score >= 70) return "stroke-green-500"
-    if (score >= 50) return "stroke-orange-500"
+    if (score >= 80) return "stroke-green-500"
+    if (score >= 60) return "stroke-blue-500"
+    if (score >= 40) return "stroke-orange-500"
     return "stroke-red-500"
   }
 
   const getBackgroundGradient = (score: number) => {
-    if (score >= 70) return "from-green-50 to-green-100"
-    if (score >= 50) return "from-orange-50 to-orange-100"
+    if (score >= 80) return "from-green-50 to-green-100"
+    if (score >= 60) return "from-blue-50 to-blue-100"
+    if (score >= 40) return "from-orange-50 to-orange-100"
     return "from-red-50 to-red-100"
   }
 
@@ -117,11 +120,13 @@ export function ResilienceGauge({ score, confidence, county }: ResilienceGaugePr
                 className={`${getGaugeColor(score)} transition-all duration-1000 ease-out`}
                 style={{
                   filter:
-                    animatedScore >= 70
+                    animatedScore >= 80
                       ? "drop-shadow(0 0 8px rgba(34, 197, 94, 0.4))"
-                      : animatedScore >= 50
-                        ? "drop-shadow(0 0 8px rgba(249, 115, 22, 0.4))"
-                        : "drop-shadow(0 0 8px rgba(239, 68, 68, 0.4))",
+                      : animatedScore >= 60
+                        ? "drop-shadow(0 0 8px rgba(59, 130, 246, 0.4))"
+                        : animatedScore >= 40
+                          ? "drop-shadow(0 0 8px rgba(249, 115, 22, 0.4))"
+                          : "drop-shadow(0 0 8px rgba(239, 68, 68, 0.4))",
                 }}
               />
             </svg>
@@ -148,15 +153,16 @@ export function ResilienceGauge({ score, confidence, county }: ResilienceGaugePr
 
           <div className="pt-4 border-t border-border/50">
             <div
-              className={`inline-flex items-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium min-h-[44px] touch-manipulation ${
-                score >= 70
-                  ? "bg-green-100 text-green-800"
-                  : score >= 50
+              className={`inline-flex items-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium min-h-[44px] touch-manipulation ${score >= 80
+                ? "bg-green-100 text-green-800"
+                : score >= 60
+                  ? "bg-blue-100 text-blue-800"
+                  : score >= 40
                     ? "bg-orange-100 text-orange-800"
                     : "bg-red-100 text-red-800"
-              }`}
+                }`}
             >
-              {score >= 70 ? "🌱 Excellent Resilience" : score >= 50 ? "⚠️ Moderate Resilience" : "🚨 Low Resilience"}
+              {score >= 80 ? "🌱 No Irrigation Needed" : score >= 60 ? "💧 Light Irrigation" : score >= 40 ? "⚠️ Moderate Irrigation" : "🚨 Critical Irrigation"}
             </div>
           </div>
         </div>

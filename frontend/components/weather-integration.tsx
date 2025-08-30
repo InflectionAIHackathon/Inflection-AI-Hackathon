@@ -1,21 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Bell, CloudRain, Sun, Cloud, Wind, AlertTriangle, Info, Calendar, Droplets, Thermometer } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import {
-  Cloud,
-  CloudRain,
-  Sun,
-  Thermometer,
-  Droplets,
-  Wind,
-  AlertTriangle,
-  Bell,
-  Calendar,
   TrendingUp,
   Snowflake,
   Eye,
@@ -34,138 +26,216 @@ interface WeatherDay {
   humidity: number
   rainfall: number
   windSpeed: number
-  condition: "sunny" | "cloudy" | "rainy" | "stormy"
+  condition: "sunny" | "cloudy" | "rainy" | "partly-cloudy"
   droughtRisk: "low" | "medium" | "high"
   plantingWindow: boolean
 }
 
 interface WeatherAlert {
   id: string
-  type: "frost" | "drought" | "heavy_rain" | "temperature"
+  type: "temperature" | "rainfall" | "drought" | "planting"
   severity: "low" | "medium" | "high"
-  title: string
-  description: string
+  message: string
   timestamp: string
-  active: boolean
+  actionable: boolean
+  action?: string
 }
 
 export function WeatherIntegration({ county, score }: WeatherIntegrationProps) {
   const [activeAlerts, setActiveAlerts] = useState<WeatherAlert[]>([])
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [weatherForecast, setWeatherForecast] = useState<WeatherDay[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock 7-day weather forecast
-  const weatherForecast: WeatherDay[] = [
-    {
-      date: "2024-01-15",
-      day: "Today",
-      high: 28,
-      low: 18,
-      humidity: 65,
-      rainfall: 0,
-      windSpeed: 12,
-      condition: "sunny",
-      droughtRisk: "low",
-      plantingWindow: true,
-    },
-    {
-      date: "2024-01-16",
-      day: "Tomorrow",
-      high: 30,
-      low: 20,
-      humidity: 70,
-      rainfall: 5,
-      windSpeed: 8,
-      condition: "cloudy",
-      droughtRisk: "low",
-      plantingWindow: true,
-    },
-    {
-      date: "2024-01-17",
-      day: "Wed",
-      high: 32,
-      low: 22,
-      humidity: 75,
-      rainfall: 15,
-      windSpeed: 15,
-      condition: "rainy",
-      droughtRisk: "low",
-      plantingWindow: false,
-    },
-    {
-      date: "2024-01-18",
-      day: "Thu",
-      high: 29,
-      low: 19,
-      humidity: 68,
-      rainfall: 2,
-      windSpeed: 10,
-      condition: "cloudy",
-      droughtRisk: "medium",
-      plantingWindow: true,
-    },
-    {
-      date: "2024-01-19",
-      day: "Fri",
-      high: 35,
-      low: 25,
-      humidity: 55,
-      rainfall: 0,
-      windSpeed: 18,
-      condition: "sunny",
-      droughtRisk: "high",
-      plantingWindow: false,
-    },
-    {
-      date: "2024-01-20",
-      day: "Sat",
-      high: 33,
-      low: 23,
-      humidity: 60,
-      rainfall: 8,
-      windSpeed: 14,
-      condition: "cloudy",
-      droughtRisk: "medium",
-      plantingWindow: true,
-    },
-    {
-      date: "2024-01-21",
-      day: "Sun",
-      high: 27,
-      low: 17,
-      humidity: 72,
-      rainfall: 12,
-      windSpeed: 9,
-      condition: "rainy",
-      droughtRisk: "low",
-      plantingWindow: true,
-    },
-  ]
-
-  // Mock weather alerts
-  const mockAlerts: WeatherAlert[] = [
-    {
-      id: "1",
-      type: "temperature",
-      severity: "high",
-      title: "High Temperature Alert",
-      description: "Temperatures expected to reach 35°C on Friday. Consider additional irrigation.",
-      timestamp: "2024-01-15T08:00:00Z",
-      active: true,
-    },
-    {
-      id: "2",
-      type: "drought",
-      severity: "medium",
-      title: "Drought Risk Increasing",
-      description: "Low rainfall expected for next 3 days. Monitor soil moisture levels closely.",
-      timestamp: "2024-01-15T06:30:00Z",
-      active: true,
-    },
-  ]
-
+  // Fetch weather data when county changes
   useEffect(() => {
-    setActiveAlerts(mockAlerts)
-  }, [])
+    if (!county) return
+
+    const fetchWeatherData = async () => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        // Fetch monthly weather data for the county - use current year or fallback to 2023
+        const currentYear = new Date().getFullYear()
+        const fallbackYear = 2023
+        const response = await fetch(`/api/weather/${encodeURIComponent(county)}/monthly?year=${currentYear}`)
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Convert monthly data to 7-day forecast format
+          const forecast = generateWeatherForecast(data.weather_data || [], county)
+          setWeatherForecast(forecast)
+          
+          // Generate weather alerts based on forecast and resilience score
+          const alerts = generateWeatherAlerts(forecast, score, county)
+          setActiveAlerts(alerts)
+        } else {
+          throw new Error('Failed to fetch weather data')
+        }
+      } catch (err) {
+        console.error('Error fetching weather data:', err)
+        setError('Failed to load weather data')
+        
+        // Fallback to basic forecast if API fails
+        const fallbackForecast = generateFallbackForecast(county)
+        setWeatherForecast(fallbackForecast)
+        
+        const fallbackAlerts = generateWeatherAlerts(fallbackForecast, score, county)
+        setActiveAlerts(fallbackAlerts)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchWeatherData()
+  }, [county, score])
+
+  // Generate weather forecast from monthly data
+  const generateWeatherForecast = (monthlyData: any[], county: string): WeatherDay[] => {
+    if (!monthlyData || monthlyData.length === 0) {
+      return generateFallbackForecast(county)
+    }
+
+    const today = new Date()
+    const forecast: WeatherDay[] = []
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
+      
+      // Find corresponding monthly data
+      const month = date.getMonth()
+      const monthData = monthlyData.find(d => new Date(d.date).getMonth() === month)
+      
+      if (monthData) {
+        forecast.push({
+          date: date.toISOString().split('T')[0],
+          day: i === 0 ? "Today" : i === 1 ? "Tomorrow" : date.toLocaleDateString('en-US', { weekday: 'short' }),
+          high: monthData.max_temperature || 28 + Math.random() * 5,
+          low: monthData.min_temperature || 18 + Math.random() * 3,
+          humidity: monthData.avg_humidity || 65 + Math.random() * 15,
+          rainfall: monthData.total_rainfall || Math.random() * 20,
+          windSpeed: 8 + Math.random() * 12,
+          condition: getWeatherCondition(monthData.total_rainfall || 0),
+          droughtRisk: getDroughtRisk(monthData.total_rainfall || 0, score),
+          plantingWindow: isPlantingWindow(date, monthData.total_rainfall || 0)
+        })
+      } else {
+        // Fallback data for missing months
+        forecast.push({
+          date: date.toISOString().split('T')[0],
+          day: i === 0 ? "Today" : i === 1 ? "Tomorrow" : date.toLocaleDateString('en-US', { weekday: 'short' }),
+          high: 28 + Math.random() * 5,
+          low: 18 + Math.random() * 3,
+          humidity: 65 + Math.random() * 15,
+          rainfall: Math.random() * 20,
+          windSpeed: 8 + Math.random() * 12,
+          condition: "partly-cloudy",
+          droughtRisk: "medium",
+          plantingWindow: true
+        })
+      }
+    }
+    
+    return forecast
+  }
+
+  // Generate fallback forecast when API fails
+  const generateFallbackForecast = (county: string): WeatherDay[] => {
+    const today = new Date()
+    const forecast: WeatherDay[] = []
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
+      
+      forecast.push({
+        date: date.toISOString().split('T')[0],
+        day: i === 0 ? "Today" : i === 1 ? "Tomorrow" : date.toLocaleDateString('en-US', { weekday: 'short' }),
+        high: 28 + Math.random() * 5,
+        low: 18 + Math.random() * 3,
+        humidity: 65 + Math.random() * 15,
+        rainfall: Math.random() * 20,
+        windSpeed: 8 + Math.random() * 12,
+        condition: "partly-cloudy",
+        droughtRisk: "medium",
+        plantingWindow: true
+      })
+    }
+    
+    return forecast
+  }
+
+  // Helper functions for weather generation
+  const getWeatherCondition = (rainfall: number): "sunny" | "cloudy" | "rainy" | "partly-cloudy" => {
+    if (rainfall > 15) return "rainy"
+    if (rainfall > 5) return "cloudy"
+    if (rainfall > 0) return "partly-cloudy"
+    return "sunny"
+  }
+
+  const getDroughtRisk = (rainfall: number, resilienceScore: number): "low" | "medium" | "high" => {
+    if (rainfall > 10 || resilienceScore > 70) return "low"
+    if (rainfall > 5 || resilienceScore > 50) return "medium"
+    return "high"
+  }
+
+  const isPlantingWindow = (date: Date, rainfall: number): boolean => {
+    const month = date.getMonth()
+    // Planting windows: March-May and October-November
+    return (month >= 2 && month <= 4) || (month >= 9 && month <= 10)
+  }
+
+  // Generate weather alerts based on forecast and resilience score
+  const generateWeatherAlerts = (forecast: WeatherDay[], resilienceScore: number, county: string): WeatherAlert[] => {
+    const alerts: WeatherAlert[] = []
+    
+    // Check for high drought risk days
+    const highRiskDays = forecast.filter(day => day.droughtRisk === "high")
+    if (highRiskDays.length > 0) {
+      alerts.push({
+        id: "drought-risk",
+        type: "drought",
+        severity: "high",
+        message: `${highRiskDays.length} day(s) with high drought risk detected`,
+        timestamp: new Date().toISOString(),
+        actionable: true,
+        action: "Consider irrigation or drought-tolerant crops"
+      })
+    }
+    
+    // Check for planting window opportunities
+    const plantingDays = forecast.filter(day => day.plantingWindow && day.rainfall > 5)
+    if (plantingDays.length > 0) {
+      alerts.push({
+        id: "planting-opportunity",
+        type: "planting",
+        severity: "low",
+        message: `${plantingDays.length} day(s) suitable for planting`,
+        timestamp: new Date().toISOString(),
+        actionable: true,
+        action: "Prepare fields and seeds for planting"
+      })
+    }
+    
+    // Check for extreme temperatures
+    const extremeTempDays = forecast.filter(day => day.high > 35 || day.low < 10)
+    if (extremeTempDays.length > 0) {
+      alerts.push({
+        id: "extreme-temp",
+        type: "temperature",
+        severity: "medium",
+        message: `${extremeTempDays.length} day(s) with extreme temperatures`,
+        timestamp: new Date().toISOString(),
+        actionable: true,
+        action: "Protect crops from temperature stress"
+      })
+    }
+    
+    return alerts
+  }
 
   const getWeatherIcon = (condition: string) => {
     switch (condition) {
@@ -175,6 +245,8 @@ export function WeatherIntegration({ county, score }: WeatherIntegrationProps) {
         return <Cloud className="h-6 w-6 text-gray-500" />
       case "rainy":
         return <CloudRain className="h-6 w-6 text-blue-500" />
+      case "partly-cloudy":
+        return <Cloud className="h-6 w-6 text-gray-500" />
       case "stormy":
         return <CloudRain className="h-6 w-6 text-purple-500" />
       default:
@@ -369,8 +441,10 @@ export function WeatherIntegration({ county, score }: WeatherIntegrationProps) {
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">{getAlertIcon(alert.type)}</div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm mb-1">{alert.title}</h4>
-                          <p className="text-xs text-pretty mb-2">{alert.description}</p>
+                          <h4 className="font-semibold text-sm mb-1">{alert.message}</h4>
+                          {alert.actionable && alert.action && (
+                            <p className="text-xs text-pretty mb-2">{alert.action}</p>
+                          )}
                           <p className="text-xs opacity-75">{new Date(alert.timestamp).toLocaleString()}</p>
                         </div>
                       </div>

@@ -1,14 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
+  /* config options here */
+  output: 'standalone',
+  serverExternalPackages: ['@prisma/client'],
 }
 
 export default nextConfig

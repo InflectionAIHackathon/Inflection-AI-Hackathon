@@ -44,4 +44,4 @@ KENYA_COUNTIES = [
 ]
 
 # Benchmark yield (tonnes/ha) for resilience score calculation
-BENCHMARK_YIELD = 5.0  # 5 tonnes/ha as baseline
+BENCHMARK_YIELD = 2.5  # 2.5 tonnes/ha as baseline (realistic for Kenyan maize production)
