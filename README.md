@@ -1,23 +1,30 @@
 # 🌾 Agri-Adapt AI: AI-Powered Agricultural Resilience Platform
 
-> **Empowering Kenyan farmers with AI insights for drought-resilient farming**
+![Agri-Adapt AI Logo](https://img.shields.io/badge/Agri--Adapt-AI-brightgreen?style=for-the-badge&logo=leaf&logoColor=white)
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
 [![Polars](https://img.shields.io/badge/Polars-0.20+-green.svg)](https://pola.rs)
-[![Flask](https://img.shields.io/badge/Flask-2.3+-red.svg)](https://flask.palletsprojects.com)
+[![Next.js](https://img.shields.io/badge/Next.js-15+-black.svg)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Empowering Kenyan farmers with AI-driven drought resilience insights to make informed crop decisions and reduce agricultural losses by up to 30%.**
+
+---
 
 ## 🎯 Project Overview
 
 Agri-Adapt AI addresses Kenya's critical food security challenge by providing smallholder farmers with AI-powered maize drought resilience scores. Using historical climate and soil data, our Random Forest model predicts crop resilience, helping farmers make informed planting decisions and reduce crop failures by 20-30%.
 
 ### 🌍 Problem Statement
+
 - **Drought Impact**: 30% increase in drought frequency affecting rain-fed agriculture
 - **Crop Failures**: 20-30% annual losses in vulnerable counties like Nakuru and Machakos
 - **Data Gap**: Siloed climate, soil, and yield data leaves farmers without actionable insights
 - **Food Security**: Maize is Kenya's staple crop, critical for national food security
 
 ### 🚀 Solution
+
 - **AI-Powered Scoring**: Machine learning model predicts maize resilience (0-100%)
 - **Actionable Insights**: Visual gauge with planting recommendations
 - **Farmer-Focused**: Simple, mobile-friendly interface for low-literacy users
@@ -27,8 +34,8 @@ Agri-Adapt AI addresses Kenya's critical food security challenge by providing sm
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Flask API     │    │   ML Model      │
-│   (HTML/CSS/JS) │◄──►│   (Python)      │◄──►│   (Random Forest)│
+│   Frontend      │    │   FastAPI       │    │   ML Model      │
+│   (Next.js/React)│◄──►│   (Python)      │◄──►│   (Random Forest)│
 │                 │    │                 │    │                 │
 │ • County Select │    │ • /api/predict  │    │ • Rainfall      │
 │ • Input Forms   │    │ • /api/counties │    │ • Soil pH       │
@@ -37,252 +44,243 @@ Agri-Adapt AI addresses Kenya's critical food security challenge by providing sm
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
+### Key Features
+
+- 🎯 **Drought Resilience Scoring**: AI-powered county-level resilience scores (0-100%)
+- 🗺️ **Interactive County Selection**: Easy-to-use dropdown and map interface
+- 📊 **Data Visualization**: Interactive charts showing weather patterns and yield predictions
+- 📱 **Mobile-First Design**: Optimized for smartphones with offline capability
+- ♿ **Accessibility**: WCAG 2.1 compliant with multi-language support
+- ⚡ **Real-Time Processing**: Sub-second response times for score calculations
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- pip package manager
-- Modern web browser
+
+- Python 3.9+
+- Node.js 16+
+- Git
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-username/agri-adapt-ai.git
    cd agri-adapt-ai
    ```
 
-2. **Create virtual environment**
+2. **Backend Setup (Python/FastAPI)**
+
    ```bash
+   # Create virtual environment
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
 
-3. **Install dependencies**
-   ```bash
+   # Install Python dependencies
    pip install -r requirements.txt
-   pip install -r requirements-dev.txt  # For development
    ```
 
-4. **Run AI Model Development**
+3. **Frontend Setup (Next.js/React)**
+
    ```bash
-   # Quick data analysis
-   python scripts/analysis/quick_data_analysis.py
-   
-   # Full AI model pipeline
-   python scripts/modeling/ai_model_development.py
+   # Install Node.js dependencies
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
    ```
 
-5. **Run the application**
+4. **Start the Backend**
+
    ```bash
-   python src/api/app.py
+   python scripts/start_backend.py
+   # Backend will run on http://localhost:8000
    ```
 
-6. **Open your browser**
-   Navigate to `http://localhost:5000`
+5. **Start the Frontend**
+   ```bash
+   npm run dev
+   # Frontend will run on http://localhost:3000
+   ```
+
+---
 
 ## 🏗️ Project Structure
 
 ```
-scripts/                    # Organized script packages
-├── analysis/              # Data analysis and visualization
-├── data_processing/       # Data collection and integration
-├── modeling/              # AI model development
-└── utilities/             # Helper and maintenance tools
-
-data/                      # Data storage and organization
-├── analysis/              # Generated charts and plots
-├── processed/             # Clean, integrated datasets
-├── raw/                   # Original data sources
-└── reports/               # Analysis summaries
-
-src/                       # Source code
-├── api/                   # Flask API implementation
-├── models/                # Model definitions
-├── utils/                 # Utility modules
-└── frontend/              # Frontend components
+agri-adapt-ai/
+├── 📁 app/                    # Next.js app directory
+│   ├── page.tsx              # Main dashboard page
+│   ├── layout.tsx            # Root layout
+│   └── globals.css           # Global styles
+├── 📁 components/             # React components
+│   ├── ui/                   # Reusable UI components
+│   ├── resilience-gauge.tsx  # Resilience score display
+│   ├── recommendations-panel.tsx # Farming recommendations
+│   ├── data-visualization.tsx    # Charts and graphs
+│   └── weather-integration.tsx   # Weather data integration
+├── 📁 src/                    # Python backend source
+│   ├── api/                  # FastAPI application
+│   ├── models/               # ML model classes
+│   └── utils/                # Utility functions
+├── 📁 config/                 # Configuration files
+├── 📁 models/                 # Trained ML models
+├── 📁 data/                   # Dataset files
+├── 📁 scripts/                # Training and utility scripts
+└── 📁 tests/                  # Test suites
 ```
 
-*For detailed structure, see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)*
+---
 
-## 📊 Usage Example
+## 🔧 Backend API Endpoints
 
-### Demo Scenario: Nakuru County
-1. **Select County**: Choose "Nakuru" from dropdown
-2. **Input Parameters**:
-   - Rainfall: 800 mm/year
-   - Soil pH: 6.5
-   - Organic Carbon: 2.1%
-3. **Get Results**: 
-   - Resilience Score: 86% (Green Gauge)
-   - Predicted Yield: 4.32 t/ha
-   - Recommendation: "High Resilience - Plant maize with drought-tolerant varieties"
+### Core Endpoints
 
-### API Endpoints
+- `GET /health` - System health check
+- `GET /api/counties` - List of Kenya counties
+- `POST /api/predict` - Single prediction
+- `POST /api/predict/batch` - Batch predictions
+- `GET /api/model/status` - Model performance info
+- `GET /api/metrics` - Usage statistics
+
+### Example API Usage
 
 ```bash
-# Health check
-GET /api/health
-
-# Get Kenya counties
-GET /api/counties
-
-# Predict resilience score
-POST /api/predict
-{
-  "county": "Nakuru",
-  "rainfall": 800.0,
-  "soil_ph": 6.5,
-  "organic_carbon": 2.1
-}
-
-# Model status
-GET /api/model/status
+# Make a prediction
+curl -X POST "http://localhost:8000/api/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rainfall": 800,
+    "soil_ph": 6.5,
+    "organic_carbon": 2.1,
+    "county": "Nakuru"
+  }'
 ```
 
-## 🔬 Technical Details
+---
 
-### Machine Learning Model
-- **Algorithm**: Random Forest Regressor (100 trees)
-- **Features**: Annual rainfall, soil pH, organic carbon
-- **Target**: Maize yield (tonnes/ha)
-- **Performance**: R² ≥ 0.85, 5-fold cross-validation
-- **Interpretability**: Feature importance analysis
+## 🎨 Frontend Features
 
-### Data Sources
-- **CHIRPS**: High-resolution rainfall data (0.05°, 1981-2024)
-- **AfSIS**: Soil properties (pH, organic carbon, 250m resolution)
-- **FAOSTAT**: Global crop production statistics
-- **Processing**: Polars for efficient data manipulation
+### Dashboard Components
+
+- **Resilience Gauge**: Visual representation of drought resilience score
+- **County Selector**: Interactive dropdown with search functionality
+- **Recommendations Panel**: Actionable farming advice based on scores
+- **Data Visualization**: Interactive charts for weather and yield data
+- **Weather Integration**: Real-time weather data for selected counties
+- **Cost Calculator**: Input cost analysis for different farming strategies
 
 ### Technology Stack
-- **Backend**: Flask (Python) with CORS support
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Charts**: Chart.js for interactive visualizations
-- **Styling**: Bootstrap 5 with custom CSS
-- **Data**: Polars for high-performance data processing
+
+- **Framework**: Next.js 15 with App Router
+- **UI Library**: React 18 with TypeScript
+- **Styling**: Tailwind CSS 4 with custom components
+- **Components**: Radix UI for accessibility
+- **Charts**: Recharts for data visualization
+- **Forms**: React Hook Form with Zod validation
+
+---
 
 ## 🧪 Testing
 
-Run the test suite to ensure everything works correctly:
+### Backend Testing
 
 ```bash
 # Run all tests
-python -m pytest tests/
-
-# Run with coverage
-python -m pytest tests/ --cov=src --cov-report=html
+python -m pytest
 
 # Run specific test file
-python -m pytest tests/unit/test_maize_model.py -v
+python -m pytest tests/unit/test_backend_api.py
+
+# Run with coverage
+python -m pytest --cov=src
 ```
 
-## 📁 Project Structure
+### Frontend Testing
 
-```
-agri-adapt-ai/
-├── src/                    # Source code
-│   ├── api/               # Flask API endpoints
-│   ├── models/            # Machine learning models
-│   ├── data_processing/   # Data pipeline
-│   ├── frontend/          # Web interface
-│   └── utils/             # Helper functions
-├── tests/                 # Test suite
-│   ├── unit/             # Unit tests
-│   └── integration/      # Integration tests
-├── config/                # Configuration files
-├── data/                  # Data files
-├── notebooks/             # Jupyter notebooks
-├── docs/                  # Documentation
-├── scripts/               # Utility scripts
-└── deployment/            # Deployment configs
+```bash
+# Run tests
+npm test
+
+# Run with coverage
+npm run test:coverage
 ```
 
-## 🎯 Hackathon Deliverables
+---
 
-### ✅ Completed (Sprints 1-3)
-- [x] Project structure and setup
-- [x] Machine learning model (Random Forest)
-- [x] Flask API with endpoints
-- [x] Frontend HTML/CSS design
-- [x] Unit tests for core functionality
+## 🚀 Deployment
 
-### 🔄 In Progress (Sprint 4)
-- [x] JavaScript dashboard functionality
-- [x] API integration
-- [x] Chart.js visualizations
-- [x] Form validation and error handling
+### Backend Deployment
 
-### 📋 Remaining (Sprints 5-6)
-- [ ] End-to-end testing
-- [ ] Bug fixes and polish
-- [ ] Accessibility improvements
-- [ ] Pitch deck preparation
-- [ ] Demo rehearsal
+```bash
+# Using Docker
+docker build -t agri-adapt-ai-backend .
+docker run -p 8000:8000 agri-adapt-ai-backend
 
-## 🌟 Key Features
+# Using Docker Compose
+docker-compose up -d
+```
 
-### Must-Have (MVP)
-- ✅ County selection (47 Kenyan counties)
-- ✅ Maize drought resilience scoring (0-100%)
-- ✅ Interactive gauge visualization
-- ✅ Mobile-responsive design
+### Frontend Deployment
 
-### Should-Have
-- ✅ Input validation and error handling
-- ✅ Feature importance visualization
-- ✅ Planting recommendations
-- ✅ Loading states and user feedback
+```bash
+# Build for production
+npm run build
 
-### Could-Have
-- ✅ Tooltips and explanations
-- ✅ Basic error logging
-- ✅ Accessibility features (WCAG 2.1)
+# Start production server
+npm start
 
-## 🎭 Demo Script
+# Deploy to Vercel
+vercel --prod
+```
 
-**5-Minute Pitch Structure:**
-1. **Problem** (1 min): Drought impact on Kenyan agriculture
-2. **Solution** (1 min): AI-powered resilience scoring
-3. **Live Demo** (2 min): Nakuru county scenario
-4. **Impact & Vision** (1 min): Food security and scaling
+---
 
-**Demo Flow:**
-1. Open dashboard → Select "Nakuru"
-2. Input: 800mm rainfall, pH 6.5, 2.1% organic carbon
-3. Show: 86% resilience score, green gauge
-4. Explain: Feature importance and recommendations
+## 📊 Model Performance
+
+- **R² Score**: 0.7 (70% accuracy)
+- **Algorithm**: Random Forest Regressor
+- **Features**: Rainfall, Soil pH, Organic Carbon
+- **Training Data**: Historical climate and soil data
+- **Cross-validation**: 5-fold CV with consistent performance
+
+---
 
 ## 🤝 Contributing
 
-This is a hackathon project. For contributions:
-
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+---
+
 ## 🙏 Acknowledgments
 
-- **KALRO**: Kenya Agricultural and Livestock Research Organization
-- **CHIRPS**: Climate Hazards Group InfraRed Precipitation with Station data
-- **AfSIS**: Africa Soil Information Service
-- **FAOSTAT**: Food and Agriculture Organization Statistics
-- **Inflection AI**: Hackathon organizers and mentors
+- Kenyan farmers for their valuable insights
+- Climate data providers (CHIRPS, AfSIS, FAOSTAT)
+- Open-source community for tools and libraries
+- Agricultural experts for domain knowledge
 
-## 📞 Contact
+---
 
-- **Team**: Agri-Adapt AI Hackathon Team
-- **Project**: [GitHub Repository](https://github.com/your-username/agri-adapt-ai)
-- **Demo**: [Live Application](http://localhost:5000)
+## 📞 Support
+
+- **Documentation**: [API Docs](http://localhost:8000/docs)
+- **Issues**: [GitHub Issues](https://github.com/your-username/agri-adapt-ai/issues)
+- **Email**: support@agri-adapt-ai.com
 
 ---
 
 **Built with ❤️ for sustainable agriculture in Kenya**
-
-*Last updated: August 29, 2025*
