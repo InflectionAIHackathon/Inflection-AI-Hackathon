@@ -1,0 +1,114 @@
+{
+  "timestamp": "2025-08-30T10:29:53.571448",
+  "recovery_strategy": "Multi-pronged approach for recoverable soil data",
+  "gap_analysis": {
+    "pH_H2O": {
+      "missing_count": 114,
+      "missing_percentage": 9.163987138263666,
+      "available_count": 1130,
+      "recovery_potential": "HIGH"
+    },
+    "pH_KCl": {
+      "missing_count": 516,
+      "missing_percentage": 41.47909967845659,
+      "available_count": 728,
+      "recovery_potential": "HIGH"
+    },
+    "Total_Nitrogen": {
+      "missing_count": 340,
+      "missing_percentage": 27.331189710610932,
+      "available_count": 904,
+      "recovery_potential": "HIGH"
+    },
+    "Clay": {
+      "missing_count": 137,
+      "missing_percentage": 11.012861736334404,
+      "available_count": 1107,
+      "recovery_potential": "HIGH"
+    },
+    "Sand": {
+      "missing_count": 136,
+      "missing_percentage": 10.932475884244374,
+      "available_count": 1108,
+      "recovery_potential": "HIGH"
+    },
+    "Silt": {
+      "missing_count": 137,
+      "missing_percentage": 11.012861736334404,
+      "available_count": 1107,
+      "recovery_potential": "HIGH"
+    },
+    "CEC": {
+      "missing_count": 86,
+      "missing_percentage": 6.913183279742766,
+      "available_count": 1158,
+      "recovery_potential": "HIGH"
+    }
+  },
+  "laboratory_plan": {
+    "total_samples_needed": 1466,
+    "properties_to_analyze": [
+      "pH_H2O",
+      "pH_KCl",
+      "Total_Nitrogen",
+      "Clay",
+      "Sand",
+      "Silt",
+      "CEC"
+    ],
+    "estimated_costs": {
+      "pH_H2O": 1710,
+      "pH_KCl": 7740,
+      "Total_Nitrogen": 8500,
+      "Clay": 2740,
+      "Sand": 2720,
+      "Silt": 2740,
+      "CEC": 2580
+    },
+    "timeline": "2-3 months",
+    "priority_samples": [],
+    "total_estimated_cost": 28730,
+    "priority_regions": [
+      "Western Kenya (Bungoma, Kakamega, Kisumu)",
+      "Central Kenya (Nakuru, Kericho, Baringo)",
+      "Eastern Kenya (Machakos, Makueni, Meru)",
+      "Northern Kenya (Turkana, West Pokot, Samburu)",
+      "Coastal Kenya (Kilifi, Kwale, Taita Taveta)"
+    ]
+  },
+  "regional_averages": "shape: (4, 8)\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Region  \u2506 pH_H2O_avg \u2506 pH_KCl_avg \u2506 Total_Nitroge \u2506 Clay_avg  \u2506 Sand_avg  \u2506 Silt_avg  \u2506 CEC_avg   \u2502\n\u2502 ---     \u2506 ---        \u2506 ---        \u2506 n_avg         \u2506 ---       \u2506 ---       \u2506 ---       \u2506 ---       \u2502\n\u2502 str     \u2506 f64        \u2506 f64        \u2506 ---           \u2506 f64       \u2506 f64       \u2506 f64       \u2506 f64       \u2502\n\u2502         \u2506            \u2506            \u2506 f64           \u2506           \u2506           \u2506           \u2506           \u2502\n\u255e\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u256a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2561\n\u2502 Western \u2506 5.891872   \u2506 4.893758   \u2506 2.124123      \u2506 38.44446  \u2506 40.030188 \u2506 21.024883 \u2506 18.873527 \u2502\n\u2502 Coastal \u2506 6.588409   \u2506 5.156009   \u2506 1.334392      \u2506 36.986633 \u2506 40.095208 \u2506 20.462629 \u2506 21.79711  \u2502\n\u2502 Eastern \u2506 6.434983   \u2506 5.366292   \u2506 1.560105      \u2506 36.756206 \u2506 42.899996 \u2506 19.631775 \u2506 18.949082 \u2502\n\u2502 Central \u2506 6.957167   \u2506 6.180693   \u2506 1.028266      \u2506 29.617268 \u2506 50.171125 \u2506 19.644786 \u2506 29.932222 \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+  "expert_consultation": {
+    "soil_scientists": [
+      "University of Nairobi - Soil Science Department",
+      "KALRO - Kenya Agricultural and Livestock Research Organization",
+      "Jomo Kenyatta University - Agriculture Faculty"
+    ],
+    "consultation_topics": [
+      "Soil property validation and quality assessment",
+      "Regional soil characteristic patterns",
+      "Alternative measurement methods",
+      "Data quality standards and protocols"
+    ],
+    "estimated_costs": {
+      "university_consultation": 2000,
+      "karlo_consultation": 1500,
+      "field_validation": 3000,
+      "total_estimated": 6500
+    },
+    "timeline": "1-2 months",
+    "deliverables": [
+      "Soil data quality assessment report",
+      "Regional soil characteristic maps",
+      "Data validation protocols",
+      "Quality improvement recommendations"
+    ]
+  },
+  "summary": {
+    "total_properties_targeted": 7,
+    "total_samples_for_lab_analysis": 1466,
+    "estimated_total_cost": 35230,
+    "expected_recovery_rate": "85-90%",
+    "timeline": "2-3 months",
+    "roi_estimate": "300-500% over 2 years"
+  }
+}
